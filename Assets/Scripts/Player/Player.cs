@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class Player : MonoBehaviour
@@ -8,6 +9,10 @@ public class Player : MonoBehaviour
     [SerializeField] private float wallCheckDistance = 0.65f;
     [SerializeField] private float groundCheckDistance = 0.8f;
     [SerializeField] private LayerMask whatIsGround;
+
+    [Header("Wall Variables")]
+    [SerializeField] private float wallJumpDuration = 0.6f;
+    [SerializeField] private Vector2 wallJumpForce = new Vector2(7f, 14f);
 
     [Header("Locomotion Variables")]
     [SerializeField] private float moveSpeed = 8.0f;
@@ -20,6 +25,10 @@ public class Player : MonoBehaviour
 
     private bool isWallDetected;
     private bool isWallSliding;
+    private bool isWallJumping;
+    private WaitForSeconds wallJumpWaitForSecondsYield;
+    private IEnumerator wallJumpRoutine;
+
     private bool isGrounded;
     private bool isAirBorne;
     private bool canDoubleJump;
@@ -47,6 +56,10 @@ public class Player : MonoBehaviour
     {
         isWallDetected = false;
         isWallSliding = false;
+        isWallJumping = false;
+        wallJumpWaitForSecondsYield = new WaitForSeconds(wallJumpDuration);
+        wallJumpRoutine = WallJumpRoutine();
+
         isGrounded = true;
         isAirBorne = false;
         canDoubleJump = true;
@@ -115,6 +128,10 @@ public class Player : MonoBehaviour
         {
             return;
         }
+        if (isWallJumping)
+        {
+            return;
+        }
 
         rb.linearVelocity = new Vector2(xInput * moveSpeed, rb.linearVelocity.y);
     }
@@ -127,6 +144,10 @@ public class Player : MonoBehaviour
             {
                 Jump();
             }
+            else if (isWallDetected && !isGrounded)
+            {
+                WallJump();
+            }
             else if (canDoubleJump)
             {
                 DoubleJump();
@@ -137,8 +158,25 @@ public class Player : MonoBehaviour
     {
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
     }
+    private void WallJump()
+    {
+        canDoubleJump = true;
+        rb.linearVelocity = new Vector2(wallJumpForce.x * -facingDirection, wallJumpForce.y);
+        Flip();
+
+        wallJumpRoutine = WallJumpRoutine();
+        StopCoroutine(wallJumpRoutine);
+        StartCoroutine(wallJumpRoutine);
+    }
+    private IEnumerator WallJumpRoutine()
+    {
+        isWallJumping = true;
+        yield return wallJumpWaitForSecondsYield;
+        isWallJumping = false;
+    }
     private void DoubleJump()
     {
+        isWallJumping = false;
         canDoubleJump = false;
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, doubleJumpForce);
     }
