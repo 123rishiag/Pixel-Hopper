@@ -53,7 +53,7 @@ public class Player : MonoBehaviour
     // Animator Variables
     private int isWallSlidingAnimHash = Animator.StringToHash("isWallSliding");
     private int isGroundedAnimHash = Animator.StringToHash("isGrounded");
-    private int knockbackAnimHash = Animator.StringToHash("Knockback");
+    private int knockbackAnimHash = Animator.StringToHash("knockback");
     private int xVelocityAnimHash = Animator.StringToHash("xVelocity");
     private int yVelocityAnimHash = Animator.StringToHash("yVelocity");
 
@@ -195,18 +195,16 @@ public class Player : MonoBehaviour
 
     public void KnockBack()
     {
-        if (isKnocked)
+        if (canBeKnocked)
         {
-            return;
+            knockbackRoutine = KnockbackRoutine();
+            StopCoroutine(knockbackRoutine);
+            StartCoroutine(knockbackRoutine);
+
+            anim.SetTrigger(knockbackAnimHash);
+
+            rb.linearVelocity = new Vector2(knockbackForce.x * -facingDirection, knockbackForce.y);
         }
-
-        knockbackRoutine = KnockbackRoutine();
-        StopCoroutine(knockbackRoutine);
-        StartCoroutine(knockbackRoutine);
-
-        anim.SetTrigger(knockbackAnimHash);
-
-        rb.linearVelocity = new Vector2(knockbackForce.x * -facingDirection, knockbackForce.y);
     }
 
     private IEnumerator KnockbackRoutine()
