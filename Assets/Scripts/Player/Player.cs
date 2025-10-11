@@ -14,6 +14,10 @@ public class Player : MonoBehaviour
     [SerializeField] private float wallJumpDuration = 0.6f;
     [SerializeField] private Vector2 wallJumpForce = new Vector2(7f, 14f);
 
+    [Header("Knockback Variables")]
+    [SerializeField] private float knockbackDuration = 0.7f;
+    [SerializeField] private Vector2 knockbackForce = new Vector2(5f, 7f);
+
     [Header("Locomotion Variables")]
     [SerializeField] private float moveSpeed = 8.0f;
     [SerializeField] private float jumpForce = 14.0f;
@@ -33,6 +37,12 @@ public class Player : MonoBehaviour
     private bool isAirBorne;
     private bool canDoubleJump;
 
+    private bool canBeKnocked;
+    private bool isKnocked;
+
+    private WaitForSeconds knockbackWaitForSecondsYield;
+    private IEnumerator knockbackRoutine;
+
     private float xInput;
     private float yInput;
     private bool isJumpKeyPressed;
@@ -43,6 +53,7 @@ public class Player : MonoBehaviour
     // Animator Variables
     private int isWallSlidingAnimHash = Animator.StringToHash("isWallSliding");
     private int isGroundedAnimHash = Animator.StringToHash("isGrounded");
+    private int knockbackAnimHash = Animator.StringToHash("Knockback");
     private int xVelocityAnimHash = Animator.StringToHash("xVelocity");
     private int yVelocityAnimHash = Animator.StringToHash("yVelocity");
 
@@ -64,6 +75,11 @@ public class Player : MonoBehaviour
         isAirBorne = false;
         canDoubleJump = true;
 
+        canBeKnocked = true;
+        isKnocked = false;
+        knockbackWaitForSecondsYield = new WaitForSeconds(knockbackDuration);
+        knockbackRoutine = KnockbackRoutine();
+
         xInput = 0f;
         yInput = 0f;
         isJumpKeyPressed = false;
@@ -74,6 +90,16 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
+        if (Input.GetKeyDown(KeyCode.K))
+        {
+            KnockBack();
+        }
+
+        if (isKnocked)
+        {
+            return;
+        }
+
         HandleWallSlide();
         HandleAirbone();
         HandleMovement();
@@ -122,20 +148,6 @@ public class Player : MonoBehaviour
         isAirBorne = true;
     }
 
-    private void HandleMovement()
-    {
-        if (isWallDetected)
-        {
-            return;
-        }
-        if (isWallJumping)
-        {
-            return;
-        }
-
-        rb.linearVelocity = new Vector2(xInput * moveSpeed, rb.linearVelocity.y);
-    }
-
     private void HandleJump()
     {
         if (isJumpKeyPressed)
@@ -179,6 +191,47 @@ public class Player : MonoBehaviour
         isWallJumping = false;
         canDoubleJump = false;
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, doubleJumpForce);
+    }
+
+    public void KnockBack()
+    {
+        if (isKnocked)
+        {
+            return;
+        }
+
+        knockbackRoutine = KnockbackRoutine();
+        StopCoroutine(knockbackRoutine);
+        StartCoroutine(knockbackRoutine);
+
+        anim.SetTrigger(knockbackAnimHash);
+
+        rb.linearVelocity = new Vector2(knockbackForce.x * -facingDirection, knockbackForce.y);
+    }
+
+    private IEnumerator KnockbackRoutine()
+    {
+        canBeKnocked = false;
+        isKnocked = true;
+
+        yield return knockbackWaitForSecondsYield;
+
+        canBeKnocked = true;
+        isKnocked = false;
+    }
+
+    private void HandleMovement()
+    {
+        if (isWallDetected)
+        {
+            return;
+        }
+        if (isWallJumping)
+        {
+            return;
+        }
+
+        rb.linearVelocity = new Vector2(xInput * moveSpeed, rb.linearVelocity.y);
     }
 
     private void HandleFlip()
