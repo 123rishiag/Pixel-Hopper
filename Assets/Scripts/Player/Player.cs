@@ -195,16 +195,18 @@ public class Player : MonoBehaviour
 
     public void KnockBack()
     {
-        if (canBeKnocked)
+        if (!canBeKnocked)
         {
-            knockbackRoutine = KnockbackRoutine();
-            StopCoroutine(knockbackRoutine);
-            StartCoroutine(knockbackRoutine);
-
-            anim.SetTrigger(knockbackAnimHash);
-
-            rb.linearVelocity = new Vector2(knockbackForce.x * -facingDirection, knockbackForce.y);
+            return;
         }
+
+        knockbackRoutine = KnockbackRoutine();
+        StopCoroutine(knockbackRoutine);
+        StartCoroutine(knockbackRoutine);
+
+        anim.SetTrigger(knockbackAnimHash);
+
+        rb.linearVelocity = new Vector2(knockbackForce.x * -facingDirection, knockbackForce.y);
     }
 
     private IEnumerator KnockbackRoutine()
