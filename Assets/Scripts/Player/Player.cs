@@ -14,6 +14,9 @@ public class Player : MonoBehaviour
     [SerializeField] private float wallJumpDuration = 0.6f;
     [SerializeField] private Vector2 wallJumpForce = new Vector2(7f, 14f);
 
+    [Header("Buffer Jump Variables")]
+    [SerializeField] private float bufferJumpWindow = 0.25f;
+
     [Header("Knockback Variables")]
     [SerializeField] private float knockbackDuration = 0.7f;
     [SerializeField] private Vector2 knockbackForce = new Vector2(5f, 7f);
@@ -32,6 +35,7 @@ public class Player : MonoBehaviour
     private bool isWallJumping;
     private WaitForSeconds wallJumpWaitForSecondsYield;
     private IEnumerator wallJumpRoutine;
+    private float bufferJumpActivatedTime;
 
     private bool isGrounded;
     private bool isAirBorne;
@@ -70,6 +74,7 @@ public class Player : MonoBehaviour
         isWallJumping = false;
         wallJumpWaitForSecondsYield = new WaitForSeconds(wallJumpDuration);
         wallJumpRoutine = WallJumpRoutine();
+        bufferJumpActivatedTime = -1f;
 
         isGrounded = true;
         isAirBorne = false;
@@ -141,6 +146,8 @@ public class Player : MonoBehaviour
     {
         isAirBorne = false;
         canDoubleJump = true;
+
+        AttemptBufferJump();
     }
 
     private void EnableAirborne()
@@ -164,8 +171,10 @@ public class Player : MonoBehaviour
             {
                 DoubleJump();
             }
+            RequestBufferJump();
         }
     }
+
     private void Jump()
     {
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
@@ -191,6 +200,21 @@ public class Player : MonoBehaviour
         isWallJumping = false;
         canDoubleJump = false;
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, doubleJumpForce);
+    }
+    private void RequestBufferJump()
+    {
+        if (isAirBorne)
+        {
+            bufferJumpActivatedTime = Time.time;
+        }
+    }
+    private void AttemptBufferJump()
+    {
+        if (Time.time < bufferJumpActivatedTime + bufferJumpWindow)
+        {
+            bufferJumpActivatedTime = 0f;
+            Jump();
+        }
     }
 
     public void KnockBack()
