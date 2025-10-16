@@ -14,8 +14,9 @@ public class Player : MonoBehaviour
     [SerializeField] private float wallJumpDuration = 0.6f;
     [SerializeField] private Vector2 wallJumpForce = new Vector2(7f, 14f);
 
-    [Header("Buffer Jump Variables")]
+    [Header("Buffer & Coyote Jump Variables")]
     [SerializeField] private float bufferJumpWindow = 0.25f;
+    [SerializeField] private float coyoteJumpWindow = 0.2f;
 
     [Header("Knockback Variables")]
     [SerializeField] private float knockbackDuration = 0.7f;
@@ -36,12 +37,12 @@ public class Player : MonoBehaviour
     private WaitForSeconds wallJumpWaitForSecondsYield;
     private IEnumerator wallJumpRoutine;
     private float bufferJumpActivatedTime;
+    private float coyoteJumpActivatedTime;
 
     private bool isGrounded;
     private bool isAirBorne;
     private bool canDoubleJump;
 
-    private bool canBeKnocked;
     private bool isKnocked;
 
     private WaitForSeconds knockbackWaitForSecondsYield;
@@ -75,12 +76,12 @@ public class Player : MonoBehaviour
         wallJumpWaitForSecondsYield = new WaitForSeconds(wallJumpDuration);
         wallJumpRoutine = WallJumpRoutine();
         bufferJumpActivatedTime = -1f;
+        coyoteJumpActivatedTime = -1f;
 
         isGrounded = true;
         isAirBorne = false;
         canDoubleJump = true;
 
-        canBeKnocked = true;
         isKnocked = false;
         knockbackWaitForSecondsYield = new WaitForSeconds(knockbackDuration);
         knockbackRoutine = KnockbackRoutine();
@@ -153,13 +154,19 @@ public class Player : MonoBehaviour
     private void EnableAirborne()
     {
         isAirBorne = true;
+
+        if (rb.linearVelocity.y < 0)
+        {
+            ActivateCoyoteJump();
+        }
     }
 
     private void HandleJump()
     {
         if (isJumpKeyPressed)
         {
-            if (isGrounded)
+            bool coyoteJumpAvailable = Time.time < coyoteJumpActivatedTime + coyoteJumpWindow;
+            if (isGrounded || coyoteJumpAvailable)
             {
                 Jump();
             }
@@ -172,9 +179,9 @@ public class Player : MonoBehaviour
                 DoubleJump();
             }
             RequestBufferJump();
+            CancelCoyoteJump();
         }
     }
-
     private void Jump()
     {
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
@@ -201,6 +208,8 @@ public class Player : MonoBehaviour
         canDoubleJump = false;
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, doubleJumpForce);
     }
+
+    #region Buffer & Coyote Jump
     private void RequestBufferJump()
     {
         if (isAirBorne)
@@ -212,14 +221,17 @@ public class Player : MonoBehaviour
     {
         if (Time.time < bufferJumpActivatedTime + bufferJumpWindow)
         {
-            bufferJumpActivatedTime = 0f;
+            bufferJumpActivatedTime = Time.time - 1;
             Jump();
         }
     }
+    private void ActivateCoyoteJump() => coyoteJumpActivatedTime = Time.time;
+    private void CancelCoyoteJump() => coyoteJumpActivatedTime = Time.time - 1;
+    #endregion
 
     public void KnockBack()
     {
-        if (!canBeKnocked)
+        if (isKnocked)
         {
             return;
         }
@@ -235,12 +247,8 @@ public class Player : MonoBehaviour
 
     private IEnumerator KnockbackRoutine()
     {
-        canBeKnocked = false;
         isKnocked = true;
-
         yield return knockbackWaitForSecondsYield;
-
-        canBeKnocked = true;
         isKnocked = false;
     }
 
