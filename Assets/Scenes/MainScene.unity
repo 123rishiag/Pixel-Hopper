@@ -292,7 +292,7 @@ Rigidbody2D:
     m_Bits: 0
   m_Interpolate: 1
   m_SleepingMode: 1
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
   m_Constraints: 4
 --- !u!70 &408880218
 CapsuleCollider2D:
@@ -350,6 +350,8 @@ MonoBehaviour:
     m_Bits: 64
   wallJumpDuration: 0.6
   wallJumpForce: {x: 7, y: 14}
+  bufferJumpWindow: 0.25
+  coyoteJumpWindow: 0.2
   knockbackDuration: 0.7
   knockbackForce: {x: 5, y: 7}
   moveSpeed: 8
